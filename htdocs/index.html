@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/styles.css">
+  <title>C Web Server</title>
+</head>
+
+<body class="bg-dark text-white">
+  <nav class="navbar">
+    <div class="container-fluid">
+      <a class="navbar-brand text-white fw-light" href="#">C Web Server</a>
+    </div>
+  </nav>
+  <section class="hero">
+    <div class="container pt-5">
+      <h1 class="display-5">A <i>Simple</i> and <i>Fast</i> Web Server programmed in <b>C</b></h1>
+      <div class="row">
+        <div class="col-lg-9 col-12">
+          <h2 class="display-6 mt-2">Features</h2>
+          <ul class="fs-4">
+            <li>Supports simple <code>GET</code> requests (without parameters).</li>
+            <li>Supports multiple file types:
+              <ul>
+                <li><abbr title="HyperText Markup Language" class="initialism">HTML</abbr></li>
+                <li><abbr title="Cascading Style Sheets" class="initialism">CSS</abbr></li>
+                <li>JavaScript</li>
+                <li><abbr title="Joint Photographic Expert Group" class="initialism">JPEG</abbr></li>
+                <li><abbr title="Portable Network Graphics" class="initialism">PNG</abbr></li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+        <div class="col-lg-3 col-12">
+          <img class="img-fluid" src="/static/images/c-logo.png" title="C Logo">
+        </div>
+      </div>
+      <h2 class="display-6 mt-2">Limitations</h2>
+      <ul class="fs-4">
+        <li>No support for <code>GET</code> parameters and other types of request methods.</li>
+        <li>No caching policy.</li>
+        <li>Not every file type is supported.</li>
+        <li>Not suitable for production</li>
+      </ul>
+      <h2 class="display-6 mt-2">Getting Started</h2>
+      <div class="fs-4">
+        Navigate to the <code>htdocs</code> directory and add your files. Then, build and run the server executable by
+        executing <code>make run</code> .
+      </div>
+      <h2 class="display-6 mt-2">Examples</h2>
+      <div class="fs-4">
+        <a href="/static/sample/about.html">About</a>
+      </div>
+    </div>
+  </section>
+</body>
+
+</html>
