@@ -35,7 +35,7 @@ int serverSocket; // server socket
 int clientSocket; // client socket
 char *request;
 
-int main(int argc, char *argv[])
+int main()
 {
 
   signal(SIGINT, handleSignal); // register signal handler
@@ -109,10 +109,9 @@ int main(int argc, char *argv[])
       }
       else
       {
-        // HTTP response header
         char mimeType[32];
         getMimeType(fileURL, mimeType); // generate mime type from file URL
-        char resHeader[SIZE];
+        char resHeader[SIZE];           // HTTP response header
         sprintf(resHeader, "HTTP/1.1 200 OK\r\nContent-Type : %s\r\n\n", mimeType);
         int headerSize = strlen(resHeader);
 
@@ -140,6 +139,11 @@ int main(int argc, char *argv[])
 
 void getFileURL(char *route, char *fileURL)
 {
+  // if route has parameters, remove them
+  char *question = strrchr(route, '?');
+  if (question)
+    *question = '\0';
+
   // if route is empty, set it to index.html
   if (route[strlen(route) - 1] == '/')
   {
@@ -199,6 +203,6 @@ void handleSignal(int signal)
     if (request != NULL) // free request buffer
       free(request);
 
-    exit(SIGINT);
+    exit(0);
   }
 }
