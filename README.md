@@ -1,20 +1,20 @@
 # C Web Server
 
-A simple static web server made using *socket programming* in C.
+A simple static web server made using socket programming in C.
 
 
 ## Getting started
 
 In order to build the server, [GNC GCC](https://gcc.gnu.org/) must be installed in your system.
 
-[GNU Make](https://www.gnu.org/software/make/) can also be installed if you want to use the `make` command instead.
+[GNU Make](https://www.gnu.org/software/make/) can also be installed if you want to use the `make` command.
 
 
 ## Building and running the server
 
-To compile the programme with the recommended flags, run:
+To compile the programme using GCC, run:
 ``` Bash
-gcc -Wall -g -o server server.c
+gcc -Wall -Wextra -g -o server server.c
 ```
 
 To run the server:
