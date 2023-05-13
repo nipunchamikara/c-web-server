@@ -129,8 +129,8 @@ int main()
 
         send(clientSocket, resBuffer, fsize + headerSize, 0); // send HTTP header
         free(resBuffer);
+        fclose(file);
       }
-      fclose(file);
     }
     close(clientSocket);
     printf("\n");
