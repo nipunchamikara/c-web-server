@@ -42,6 +42,8 @@ int main()
 
   serverSocket = socket(AF_INET, SOCK_STREAM, 0); // Socket of type IPv4 using TCP protocol
 
+  setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &(int){1}, sizeof(int)); // reuse address and port
+
   struct sockaddr_in serverAddress;                       // Server Socket Address
   serverAddress.sin_family = AF_INET;                     // IPv4
   serverAddress.sin_port = htons(PORT);                   // port number
