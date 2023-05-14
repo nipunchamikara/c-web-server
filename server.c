@@ -3,12 +3,12 @@
 #include <string.h> // string manipulation
 #include <netdb.h>  // getnameinfo
 
-// socket programming
 #include <sys/socket.h> // socket APIs
-#include <netinet/in.h> // sockaddr_in - for storing the address of the server
+#include <netinet/in.h> // sockaddr_in
 #include <unistd.h>     // open, close
 
 #include <signal.h> // signal handling
+#include <time.h>   // time
 
 #define SIZE 1024  // buffer size
 #define PORT 2728  // port number
@@ -28,56 +28,63 @@ void getFileURL(char *route, char *fileURL);
  */
 void getMimeType(char *file, char *mime);
 
-// Handles console interrupts
+/**
+ * @brief Handles SIGINT signal
+ */
 void handleSignal(int signal);
 
-int serverSocket; // server socket
-int clientSocket; // client socket
+/**
+ * @brief Returns a string with the current time in HTTP response date format
+ * @param buf buffer to store the time string
+ * https://stackoverflow.com/questions/7548759/generate-a-date-string-in-http-response-date-format-in-c
+ */
+void getTimeString(char *buf);
+
+int serverSocket;
+int clientSocket;
+
 char *request;
 
 int main()
 {
 
-  signal(SIGINT, handleSignal); // register signal handler
+  // register signal handler
+  signal(SIGINT, handleSignal);
 
-  serverSocket = socket(AF_INET, SOCK_STREAM, 0); // Socket of type IPv4 using TCP protocol
-
-  setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &(int){1}, sizeof(int)); // reuse address and port
-
-  struct sockaddr_in serverAddress;                       // Server Socket Address
+  // server internet socket address
+  struct sockaddr_in serverAddress;
   serverAddress.sin_family = AF_INET;                     // IPv4
-  serverAddress.sin_port = htons(PORT);                   // port number
-  serverAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // localhost
+  serverAddress.sin_port = htons(PORT);                   // port number in network byte order (host-to-network short)
+  serverAddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK); // localhost (host to network long)
 
-  if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0) // bind socket to address
+  // socket of type IPv4 using TCP protocol
+  serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+
+  // reuse address and port
+  setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int));
+
+  // bind socket to address
+  if (bind(serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) < 0)
   {
     printf("Error: The server is not bound to the address.\n");
     return 1;
   }
 
-  int listening = listen(serverSocket, BACKLOG); // listen for connections
-  if (listening < 0)
+  // listen for connections
+  if (listen(serverSocket, BACKLOG) < 0)
   {
     printf("Error: The server is not listening.\n");
     return 1;
   }
 
-  char hostBuffer[NI_MAXHOST];    // client's remote name
-  char serviceBuffer[NI_MAXSERV]; // port the client is connect to
-
-  // get the client's remote name and port
-  int error = getnameinfo(
-      (struct sockaddr *)&serverAddress,
-      sizeof(serverAddress),
-      hostBuffer,
-      sizeof(hostBuffer),
-      serviceBuffer,
-      sizeof(serviceBuffer),
-      0);
+  // get server address information
+  char hostBuffer[NI_MAXHOST], serviceBuffer[NI_MAXSERV];
+  int error = getnameinfo((struct sockaddr *)&serverAddress, sizeof(serverAddress), hostBuffer,
+                          sizeof(hostBuffer), serviceBuffer, sizeof(serviceBuffer), 0);
 
   if (error != 0)
   {
-    printf("Error: %s\n", gai_strerror(error)); // print error message
+    printf("Error: %s\n", gai_strerror(error));
     return 1;
   }
 
@@ -85,36 +92,54 @@ int main()
 
   while (1)
   {
-    request = (char *)malloc(SIZE * sizeof(char));   // buffer to store data (request)
-    char method[10], route[100];                     // HTTP request method and path
-    clientSocket = accept(serverSocket, NULL, NULL); // accept connection from client
-    read(clientSocket, request, SIZE);               // read data from client
-    sscanf(request, "%s %s", method, route);         // parse HTTP request
-    printf("%s %s", method, route);                  // print data received from client
+    // buffer to store data (request)
+    request = (char *)malloc(SIZE * sizeof(char));
+    char method[10], route[100];
+
+    // accept connection and read data
+    clientSocket = accept(serverSocket, NULL, NULL);
+    read(clientSocket, request, SIZE);
+
+    // parse HTTP request
+    sscanf(request, "%s %s", method, route);
+    printf("%s %s", method, route);
+
     free(request);
 
-    // only GET method supported
+    // only support GET method
     if (strcmp(method, "GET") != 0)
     {
-      const char response[] = "HTTP/1.1 400 Bad Request\r\n\n"; // HTTP response
-      send(clientSocket, response, sizeof(response), 0);        // send HTTP response
+      const char response[] = "HTTP/1.1 400 Bad Request\r\n\n";
+      send(clientSocket, response, sizeof(response), 0);
     }
     else
     {
       char fileURL[100];
-      getFileURL(route, fileURL);       // generate file URL
-      FILE *file = fopen(fileURL, "r"); // open file
+
+      // generate file URL
+      getFileURL(route, fileURL);
+
+      // read file
+      FILE *file = fopen(fileURL, "r");
       if (!file)
       {
-        const char response[] = "HTTP/1.1 404 Not Found\r\n\n"; // HTTP response
-        send(clientSocket, response, sizeof(response), 0);      // send HTTP response
+        const char response[] = "HTTP/1.1 404 Not Found\r\n\n";
+        send(clientSocket, response, sizeof(response), 0);
       }
       else
       {
+        // generate HTTP response header
+        char resHeader[SIZE];
+
+        // get current time
+        char timeBuf[100];
+        getTimeString(timeBuf);
+
+        // generate mime type from file URL
         char mimeType[32];
-        getMimeType(fileURL, mimeType); // generate mime type from file URL
-        char resHeader[SIZE];           // HTTP response header
-        sprintf(resHeader, "HTTP/1.1 200 OK\r\nContent-Type : %s\r\n\n", mimeType);
+        getMimeType(fileURL, mimeType);
+
+        sprintf(resHeader, "HTTP/1.1 200 OK\r\nDate: %s\r\nContent-Type: %s\r\n\n", timeBuf, mimeType);
         int headerSize = strlen(resHeader);
 
         printf(" %s", mimeType);
@@ -124,12 +149,15 @@ int main()
         long fsize = ftell(file);
         fseek(file, 0, SEEK_SET);
 
-        char *resBuffer = (char *)malloc(fsize + headerSize); // buffer to store data (response)
-        strcpy(resBuffer, resHeader);                         // copy HTTP header to response buffer
-        char *fileBuffer = resBuffer + headerSize;            // pointer to file buffer
-        fread(fileBuffer, fsize, 1, file);                    // read file into file buffer
+        // Allocates memory for response buffer and copies response header and file contents to it
+        char *resBuffer = (char *)malloc(fsize + headerSize);
+        strcpy(resBuffer, resHeader);
 
-        send(clientSocket, resBuffer, fsize + headerSize, 0); // send HTTP header
+        // Starting position of file contents in response buffer
+        char *fileBuffer = resBuffer + headerSize;
+        fread(fileBuffer, fsize, 1, file);
+
+        send(clientSocket, resBuffer, fsize + headerSize, 0);
         free(resBuffer);
         fclose(file);
       }
@@ -166,9 +194,11 @@ void getFileURL(char *route, char *fileURL)
 
 void getMimeType(char *file, char *mime)
 {
-  const char *dot = strrchr(file, '.'); // position in string with dot character
+  // position in string with period character
+  const char *dot = strrchr(file, '.');
 
-  if (dot == NULL) // if dot is NULL, set mime type to text/html
+  // if period not found, set mime type to text/html
+  if (dot == NULL)
     strcpy(mime, "text/html");
 
   else if (strcmp(dot, ".html") == 0)
@@ -199,12 +229,20 @@ void handleSignal(int signal)
   {
     printf("\nShutting down server...\n");
 
-    close(clientSocket); // close client socket
-    close(serverSocket); // close server socket
+    close(clientSocket);
+    close(serverSocket);
 
-    if (request != NULL) // free request buffer
+    if (request != NULL)
       free(request);
 
     exit(0);
   }
+}
+
+void getTimeString(char *buf)
+{
+  time_t now = time(0);
+  struct tm tm = *gmtime(&now);
+  strftime(buf, sizeof buf, "%a, %d %b %Y %H:%M:%S %Z", &tm);
+  return buf;
 }
