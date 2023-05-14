@@ -1,4 +1,6 @@
 # C Web Server
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 
 A simple static web server made using socket programming in C.
 
@@ -40,6 +42,9 @@ To terminate the server, you can hit <kbd>Ctrl</kbd> + <kbd>C</kbd> within the t
 
 You can create and place static web pages in the [htdocs](/htdocs/) folder which will be served when the server is running.
 
+## Contributing
+Feel free to contribute to this project and treat it as your own.
+
 ## Author
 
-W D N C Weerasiri - 2020/CS/203 - 20002033
+Nipun Chamikara Weerasiri - [nipunchamikara](https://github.com/nipunchamikara)
